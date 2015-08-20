@@ -451,13 +451,14 @@ def _get_instance_parameters(ec2_client):
         'type': 'platform'
     }
 
+    from os import path
+
     if 'host' in ctx.node.properties['parameters']:
-        print "~~~~~~~~~~~~~host~~~~~~~~~~~~~~~~~~"
         host_props = ctx.node.properties['parameters']['host']
         if 'disk_size' in host_props:
             disk_size = host_props['disk_size']
             del(host_props['disk_size'])
-        with open('/home/maxim/Cloudify/cloudify-aws-plugin/ec2/resources/instance_translation', 'r') as f:
+        with open(path.join(path.dirname(__file__),'resources/instance_translation'), 'r') as f:
             yaml_file = yaml.load(f)
 
             # initiating sat set to contain only possible instance types and finding best fit
@@ -484,19 +485,21 @@ def _get_instance_parameters(ec2_client):
     ##############################################################
 
     if 'os' in ctx.node.properties['parameters']:
-        print "~~~~~~~~~~~~~~~~~os~~~~~~~~~~~~~~~~~~~~~~~~~"
         os_props = ctx.node.properties['parameters']['os']
-        with open('/home/maxim/Cloudify/cloudify-aws-plugin/ec2/resources/image_translation', 'r') as f:
+        with open(path.join(path.dirname(__file__), 'resources/image_translation'), 'r') as f:
             yaml_file = yaml.load(f)
-            print os_props
-            parameters['image_id'] = yaml_file['builtin_images'][os_props['type']][os_props['ec2_region_name']][os_props['architecture']]['ebs']
-        del (ctx.node.properties['parameters']['os'])
+            up = [os_props[k] for k in ['type', 'version', 'architecture', 'ec2_region_name']]
+            up.insert(3, 'ebs')
+            parameters['image_id'] = _lookup(yaml_file, 'builtin_images', *up)
+            del (ctx.node.properties['parameters']['os'])
         ctx.logger.info("{} elected as image".format(parameters['image_id']))
 
     parameters.update(ctx.node.properties['parameters'])
 
     return parameters
 
+def _lookup(dic, key, *keys):
+    return _lookup(dic.get(key, {}), *keys) if keys else dic.get(key)
 
 def _get_instance_keypair(provider_variables):
     """Gets the instance key pair. If more or less than one is provided,
