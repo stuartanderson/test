@@ -17,6 +17,7 @@
 import boto.exception
 
 # Cloudify imports
+import yaml
 from ec2 import utils
 from ec2 import constants
 from ec2 import connection
@@ -62,11 +63,11 @@ def run_instances(**_):
     if _create_external_instance():
         return
 
-    instance_parameters = _get_instance_parameters()
+    instance_parameters = _get_instance_parameters(ec2_client)
 
     ctx.logger.debug(
         'Attempting to create EC2 Instance with these API parameters: {0}.'
-        .format(instance_parameters))
+            .format(instance_parameters))
 
     instance_id = _run_instances_if_needed(ec2_client, instance_parameters)
 
@@ -75,7 +76,7 @@ def run_instances(**_):
     if instance is None:
         return ctx.operation.retry(
             message='Waiting to verify that instance {0} '
-            'has been added to your account.'.format(instance_id))
+                    'has been added to your account.'.format(instance_id))
 
     utils.set_external_resource_id(
         instance_id, ctx.instance, external=False)
@@ -179,7 +180,6 @@ def terminate(**_):
 
 
 def _assign_runtime_properties_to_instance(runtime_properties):
-
     for property_name in runtime_properties:
         if 'ip' is property_name:
             ctx.instance.runtime_properties[property_name] = \
@@ -194,9 +194,9 @@ def _assign_runtime_properties_to_instance(runtime_properties):
 
 
 def _instance_started_assign_runtime_properties(instance_id):
-        _assign_runtime_properties_to_instance(
-            runtime_properties=constants.INSTANCE_INTERNAL_ATTRIBUTES)
-        ctx.logger.info('Instance {0} is running.'.format(instance_id))
+    _assign_runtime_properties_to_instance(
+        runtime_properties=constants.INSTANCE_INTERNAL_ATTRIBUTES)
+    ctx.logger.info('Instance {0} is running.'.format(instance_id))
 
 
 def _unassign_runtime_properties(runtime_properties, ctx_instance):
@@ -206,7 +206,6 @@ def _unassign_runtime_properties(runtime_properties, ctx_instance):
 
 
 def _run_instances_if_needed(ec2_client, instance_parameters):
-
     if ctx.operation.retry_number == 0:
 
         try:
@@ -224,7 +223,7 @@ def _run_instances_if_needed(ec2_client, instance_parameters):
         if not instances:
             raise NonRecoverableError(
                 'Instance failed for an unknown reason. Node ID: {0}. '
-                .format(ctx.instance.id))
+                    .format(ctx.instance.id))
         elif len(instances) != 1:
             raise NonRecoverableError(
                 'More than one instance was created by the install workflow. '
@@ -236,7 +235,6 @@ def _run_instances_if_needed(ec2_client, instance_parameters):
 
 
 def _get_instances_from_reservation_id(ec2_client):
-
     try:
         reservations = ec2_client.get_all_instances(
             filters={
@@ -254,7 +252,6 @@ def _get_instances_from_reservation_id(ec2_client):
 
 
 def _create_external_instance():
-
     if not utils.use_external_resource(ctx.node.properties):
         return False
 
@@ -269,25 +266,23 @@ def _create_external_instance():
 
 
 def _start_external_instance(instance_id):
-
     if not utils.use_external_resource(ctx.node.properties):
         return False
 
     ctx.logger.info(
         'Not starting instance {0}, because it is an external resource.'
-        .format(instance_id))
+            .format(instance_id))
     _instance_started_assign_runtime_properties(instance_id)
     return True
 
 
 def _stop_external_instance(instance_id):
-
     if not utils.use_external_resource(ctx.node.properties):
         return False
 
     ctx.logger.info(
         'External resource. Not stopping instance {0}.'
-        .format(instance_id))
+            .format(instance_id))
     _unassign_runtime_properties(
         runtime_properties=constants.INSTANCE_INTERNAL_ATTRIBUTES,
         ctx_instance=ctx.instance)
@@ -295,13 +290,12 @@ def _stop_external_instance(instance_id):
 
 
 def _terminate_external_instance(instance_id):
-
     if not utils.use_external_resource(ctx.node.properties):
         return False
 
     ctx.logger.info(
         'External resource. Not terminating instance {0}.'
-        .format(instance_id))
+            .format(instance_id))
     utils.unassign_runtime_property_from_resource(
         constants.EXTERNAL_RESOURCE_ID, ctx.instance)
     return True
@@ -386,7 +380,7 @@ def _get_instance_attribute(attribute):
     if constants.EXTERNAL_RESOURCE_ID not in ctx.instance.runtime_properties:
         raise NonRecoverableError(
             'Unable to get instance attibute {0}, because {1} is not set.'
-            .format(attribute, constants.EXTERNAL_RESOURCE_ID))
+                .format(attribute, constants.EXTERNAL_RESOURCE_ID))
 
     instance_id = \
         ctx.instance.runtime_properties[constants.EXTERNAL_RESOURCE_ID]
@@ -400,12 +394,12 @@ def _get_instance_attribute(attribute):
                 raise NonRecoverableError(
                     'Unable to get instance attibute {0}, because '
                     'no instance with id {1} exists in this account.'
-                    .format(attribute, instance_id))
+                        .format(attribute, instance_id))
             elif len(instances) != 1:
                 raise NonRecoverableError(
                     'Unable to get instance attibute {0}, because more '
                     'than one instance with id {1} exists in this account.'
-                    .format(attribute, instance_id))
+                        .format(attribute, instance_id))
             instance_object = instances[0]
         else:
             raise NonRecoverableError(
@@ -426,7 +420,7 @@ def _get_instance_state():
     return state
 
 
-def _get_instance_parameters():
+def _get_instance_parameters(ec2_client):
     """The parameters to the run_instance boto call.
 
     :param ctx:  The Cloudify ctx context.
@@ -450,6 +444,54 @@ def _get_instance_parameters():
         'security_group_ids': attached_group_ids,
         'key_name': _get_instance_keypair(provider_variables)
     }
+
+    # TODO: This is the workspace
+    tosca2ec2 = {
+        'architecture': 'architecture',
+        'type': 'platform'
+    }
+
+    if 'host' in ctx.node.properties['parameters']:
+        print "~~~~~~~~~~~~~host~~~~~~~~~~~~~~~~~~"
+        host_props = ctx.node.properties['parameters']['host']
+        if 'disk_size' in host_props:
+            disk_size = host_props['disk_size']
+            del(host_props['disk_size'])
+        with open('/home/maxim/Cloudify/cloudify-aws-plugin/ec2/resources/instance_translation', 'r') as f:
+            yaml_file = yaml.load(f)
+
+            # initiating sat set to contain only possible instance types and finding best fit
+            sat_set = {}
+            for instance_type, subtype_instance in yaml_file.iteritems():
+                for instance, attributes in subtype_instance.iteritems():
+                    rec = "{}.{}".format(instance_type, instance)
+                    for key, req_value in host_props.iteritems():
+                        if req_value <= attributes[key]:
+                            add_val = attributes[key] - req_value
+                            add_val = add_val / 1024.0 if key == 'mem_size' else add_val
+                            sat_set[rec] = (sat_set[rec] + add_val) if rec in sat_set else 0
+                        else:
+                            if rec in sat_set:
+                                del(sat_set[rec])
+                            break
+
+            # finding best fit
+            print sat_set
+            del (ctx.node.properties['parameters']['host'])
+            parameters['instance_type'] = min(sat_set, key=sat_set.get)
+            ctx.logger.info("{} elected as instance type".format(parameters['instance_type']))
+
+    ##############################################################
+
+    if 'os' in ctx.node.properties['parameters']:
+        print "~~~~~~~~~~~~~~~~~os~~~~~~~~~~~~~~~~~~~~~~~~~"
+        os_props = ctx.node.properties['parameters']['os']
+        with open('/home/maxim/Cloudify/cloudify-aws-plugin/ec2/resources/image_translation', 'r') as f:
+            yaml_file = yaml.load(f)
+            print os_props
+            parameters['image_id'] = yaml_file['builtin_images'][os_props['type']][os_props['ec2_region_name']][os_props['architecture']]['ebs']
+        del (ctx.node.properties['parameters']['os'])
+        ctx.logger.info("{} elected as image".format(parameters['image_id']))
 
     parameters.update(ctx.node.properties['parameters'])
 

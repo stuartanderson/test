@@ -1,0 +1,105 @@
+
+---
+builtin_images:
+  ubuntu:
+    14.04:
+      ap-northeast-1:
+        64:
+          ebs: 'ami-12119512'
+        32:
+          ebs: 'ami-86109486'
+      ap-southeast-1:
+        64:
+          ebs: 'ami-5c353b0e'
+        32:
+          ebs: 'ami-58353b0a'
+      eu-central-1:
+        64:
+          ebs: 'ami-98e0e785'
+        32:
+          ebs: 'ami-9ee0e783'
+      eu-west-1:
+        64:
+          ebs: 'ami-a0401cd7'
+        32:
+          ebs: 'ami-f8d18e8f'
+      sa-east-1:
+        64:
+          ebs: 'ami-aba129b6'
+        32:
+          ebs: 'ami-a9a129b4'
+      us-east-1:
+        64:
+          ebs: 'ami-b7ce7adc'
+        32:
+          ebs: 'ami-b3ce7ad8'
+      us-west-1:
+        64:
+          ebs: 'ami-ff6d93bb'
+        32:
+          ebs: 'ami-f36d93b7'
+      cn-north:
+        64:
+          ebs: 'ami-6cd34f55'
+        32:
+          ebs: 'ami-76d34f4f'
+      us-gov-west-1:
+        64:
+          ebs: 'ami-5d89ea7e'
+        32:
+          ebs: 'ami-5b89ea78'
+      ap-southeast-2:
+        64:
+          ebs: 'ami-cf0446f5'
+        32:
+          ebs: 'ami-c90446f3'
+      us-west-2:
+        64:
+          ebs: 'ami-bbd5c08b'
+        32:
+          ebs: 'ami-b7d5c087'
+    12.10:
+      ap-northeast-1:
+        64:
+          ebs: 'ami-050d7404'
+        32:
+          ebs: 'ami-030d7402'
+      ap-southeast-1:
+        64:
+          ebs: 'ami-4e06551c'
+        32:
+          ebs: 'ami-4806551a'
+      eu-west-1:
+        64:
+          ebs: 'ami-01c83376'
+        32:
+          ebs: 'ami-05c83372'
+      sa-east-1:
+        64:
+          ebs: 'ami-ff54f6e2'
+        32:
+          ebs: 'ami-fd54f6e0'
+      us-east-1:
+        64:
+          ebs: 'ami-63071b0a'
+        32:
+          ebs: 'ami-6f071b06'
+      us-west-1:
+        64:
+          ebs: 'ami-28c9f06d'
+        32:
+          ebs: 'ami-2ec9f06b'
+      ap-southeast-2:
+        64:
+          ebs: 'ami-0752ca3d'
+        32:
+          ebs: 'ami-0152ca3b'
+      us-west-2:
+        64:
+          ebs: 'ami-d0c5aee0'
+        32:
+          ebs: 'ami-ecc5aedc'
+
+  centos:
+    6:
+    7:

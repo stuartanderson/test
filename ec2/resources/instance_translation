@@ -1,0 +1,221 @@
+#
+# vcpus - number of virtaul cpus
+# ram - RAM of the instance type (in GiB)
+# storage - in GB
+#
+# https://aws.amazon.com/ec2/instance-types/
+#
+---
+#t2:
+#  micro:
+#    num_cpus: 1
+#    mem_size: 1024
+#    disk_size: ebs
+#    cpu_freq: 3.3
+#  small:
+#    num_cpus: 1
+#    mem_size: 2048
+#    disk_size: ebs
+#    cpu_freq: 3.3
+#  medium:
+#    num_cpus: 2
+#    mem_size: 4096
+#    disk_size: ebs
+#    cpu_freq: 3.3
+#  large:
+#    num_cpus: 2
+#    mem_size: 8192
+#    disk_size: ebs
+#    cpu_freq: 3.0
+
+#m4:
+#  large:
+#    num_cpus: 2
+#    mem_size: 8192
+#    disk_size: ebs
+#    cpu_freq: 2.4
+#  xlarge:
+#    num_cpus: 2
+#    mem_size: 16384
+#    disk_size: ebs
+#    cpu_freq: 2.4
+#  2xlarge:
+#    num_cpus: 8
+#    mem_size: 32768
+#    disk_size: ebs
+#    cpu_freq: 2.4
+#  4xlarge:
+#    num_cpus: 16
+#    mem_size: 65536
+#    disk_size: ebs
+#    cpu_freq: 2.4
+#  10xlarge:
+#    num_cpus: 40
+#    mem_size: 163840
+#    disk_size: ebs
+#    cpu_freq: 2.4
+
+m3:
+  medium:
+    num_cpus: 1
+    mem_size: 3840
+    disk_size: 4
+    cpu_freq: 2.5
+  large:
+    num_cpus: 2
+    mem_size: 7680
+    disk_size: 32
+    cpu_freq: 2.5
+  xlarge:
+    num_cpus: 4
+    mem_size: 15360
+    disk_size: 80
+    cpu_freq: 2.5
+  2xlarge:
+    num_cpus: 8
+    mem_size: 30720
+    disk_size: 160
+    cpu_freq: 2.5
+
+#c4:
+#  large:
+#    num_cpus: 2
+#    mem_size: 3840
+#    disk_size: ebs
+#    cpu_freq: 2.9
+#  xlarge:
+#    num_cpus: 4
+#    mem_size: 7680
+#    disk_size: ebs
+#    cpu_freq: 2.9
+#  2xlarge:
+#    num_cpus: 8
+#    mem_size: 15360
+#    disk_size: ebs
+#    cpu_freq: 2.9
+#  4xlarge:
+#    num_cpus: 16
+#    mem_size: 30720
+#    disk_size: ebs
+#    cpu_freq: 2.9
+#  8xlarge:
+#    num_cpus: 36
+#    mem_size: 61440
+#    disk_size: ebs
+#    cpu_freq: 2.9
+
+#c3:
+#  large:
+#    num_cpus: 2
+#    mem_size: 3840
+#    disk_size: 32
+#    cpu_freq: 2.8
+#  xlarge:
+#    num_cpus: 4
+#    mem_size: 7680
+#    disk_size: 80
+#    cpu_freq: 2.8
+#  2xlarge:
+#    num_cpus: 7
+#    mem_size: 15360
+#    disk_size: 160
+#    cpu_freq: 2.8
+#  4xlarge:
+#    num_cpus: 16
+#    mem_size: 30720
+#    disk_size: 320
+#    cpu_freq: 2.8
+#  8xlarge:
+#    num_cpus: 32
+#    mem_size: 61440
+#    disk_size: 640
+#    cpu_freq: 2.8
+
+#g2:
+#  2xlarge:
+#    num_cpus: 8
+#    mem_size: 15360
+#    disk_size: 60
+#    cpu_freq: 2.6
+#  8xlarge:
+#    num_cpus: 32
+#    mem_size: 61440
+#    disk_size: 240
+#    cpu_freq: 2.6
+#
+#r3:
+#  large:
+#    num_cpus: 2
+#    mem_size: 15616
+#    disk_size: 32
+#    cpu_freq: 2.5
+#  2xlarge:
+#    num_cpus: 4
+#    mem_size: 31232
+#    disk_size: 80
+#    cpu_freq: 2.5
+#  4xlarge:
+#    num_cpus: 16
+#    mem_size: 124928
+#    disk_size: 320
+#    cpu_freq: 2.5
+#  8xlarge:
+#    num_cpus: 32
+#    mem_size: 249856
+#    disk_size: 640
+#    cpu_freq: 2.5
+#
+#i2:
+#  xlarge:
+#    num_cpus: 4
+#    mem_size: 31232
+#    disk_size: 800
+#    cpu_freq: 2.5
+#  2xlarge:
+#    num_cpus: 8
+#    mem_size: 62464
+#    disk_size: 1600
+#    cpu_freq: 2.5
+#  4xlarge:
+#    num_cpus: 16
+#    mem_size: 124928
+#    disk_size: 32ebs
+#    cpu_freq: 2.5
+#  8xlarge:
+#    num_cpus: 32
+#    mem_size: 249856
+#    disk_size: 64ebs
+#    cpu_freq: 2.5
+#
+#d2:
+#  xlarge:
+#    num_cpus: 4
+#    mem_size: 31232
+#    disk_size: 6ebs
+#    cpu_freq: 2.4
+#  2xlarge:
+#    num_cpus: 8
+#    mem_size: 62464
+#    disk_size: 12ebs
+#    cpu_freq: 2.4
+#  4xlarge:
+#    num_cpus: 16
+#    mem_size: 124928
+#    disk_size: 24ebs
+#    cpu_freq: 2.4
+#  8xlarge:
+#    num_cpus: 36
+#    mem_size: 249856
+#    disk_size: 48ebs
+#    cpu_freq: 2.4
+
+
+
+
+
+
+
+
+
+
+
