@@ -55,4 +55,18 @@ builtin_images:
 
   centos:
     6:
+      64:
+        ebs:
+          eu-west-1: 'ami-c16265b5'
+      32:
+        ebs:
+        eu-west-1: 'ami-01626575'
     7:
+      64:
+        ebs:
+          eu-west-1: 'ami-230b1b57'
+      32:
+        ebs:
+          eu-west-1: ''
+
+custom_images:

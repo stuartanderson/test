@@ -12,15 +12,18 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+from os import path
 
 # Third-party Imports
 import boto.exception
+from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
 
 # Cloudify imports
 import yaml
 from ec2 import utils
 from ec2 import constants
 from ec2 import connection
+
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify.decorators import operation
@@ -67,7 +70,7 @@ def run_instances(**_):
 
     ctx.logger.debug(
         'Attempting to create EC2 Instance with these API parameters: {0}.'
-            .format(instance_parameters))
+        .format(instance_parameters))
 
     instance_id = _run_instances_if_needed(ec2_client, instance_parameters)
 
@@ -223,7 +226,7 @@ def _run_instances_if_needed(ec2_client, instance_parameters):
         if not instances:
             raise NonRecoverableError(
                 'Instance failed for an unknown reason. Node ID: {0}. '
-                    .format(ctx.instance.id))
+                .format(ctx.instance.id))
         elif len(instances) != 1:
             raise NonRecoverableError(
                 'More than one instance was created by the install workflow. '
@@ -271,7 +274,7 @@ def _start_external_instance(instance_id):
 
     ctx.logger.info(
         'Not starting instance {0}, because it is an external resource.'
-            .format(instance_id))
+        .format(instance_id))
     _instance_started_assign_runtime_properties(instance_id)
     return True
 
@@ -282,7 +285,7 @@ def _stop_external_instance(instance_id):
 
     ctx.logger.info(
         'External resource. Not stopping instance {0}.'
-            .format(instance_id))
+        .format(instance_id))
     _unassign_runtime_properties(
         runtime_properties=constants.INSTANCE_INTERNAL_ATTRIBUTES,
         ctx_instance=ctx.instance)
@@ -295,7 +298,7 @@ def _terminate_external_instance(instance_id):
 
     ctx.logger.info(
         'External resource. Not terminating instance {0}.'
-            .format(instance_id))
+        .format(instance_id))
     utils.unassign_runtime_property_from_resource(
         constants.EXTERNAL_RESOURCE_ID, ctx.instance)
     return True
@@ -380,7 +383,7 @@ def _get_instance_attribute(attribute):
     if constants.EXTERNAL_RESOURCE_ID not in ctx.instance.runtime_properties:
         raise NonRecoverableError(
             'Unable to get instance attibute {0}, because {1} is not set.'
-                .format(attribute, constants.EXTERNAL_RESOURCE_ID))
+            .format(attribute, constants.EXTERNAL_RESOURCE_ID))
 
     instance_id = \
         ctx.instance.runtime_properties[constants.EXTERNAL_RESOURCE_ID]
@@ -394,12 +397,12 @@ def _get_instance_attribute(attribute):
                 raise NonRecoverableError(
                     'Unable to get instance attibute {0}, because '
                     'no instance with id {1} exists in this account.'
-                        .format(attribute, instance_id))
+                    .format(attribute, instance_id))
             elif len(instances) != 1:
                 raise NonRecoverableError(
                     'Unable to get instance attibute {0}, because more '
                     'than one instance with id {1} exists in this account.'
-                        .format(attribute, instance_id))
+                    .format(attribute, instance_id))
             instance_object = instances[0]
         else:
             raise NonRecoverableError(
@@ -446,60 +449,83 @@ def _get_instance_parameters(ec2_client):
     }
 
     # TODO: This is the workspace
-    tosca2ec2 = {
-        'architecture': 'architecture',
-        'type': 'platform'
-    }
-
-    from os import path
-
     if 'host' in ctx.node.properties['parameters']:
-        host_props = ctx.node.properties['parameters']['host']
-        if 'disk_size' in host_props:
-            disk_size = host_props['disk_size']
-            del(host_props['disk_size'])
-        with open(path.join(path.dirname(__file__),'resources/instance_translation'), 'r') as f:
-            yaml_file = yaml.load(f)
-
-            # initiating sat set to contain only possible instance types and finding best fit
-            sat_set = {}
-            for instance_type, subtype_instance in yaml_file.iteritems():
-                for instance, attributes in subtype_instance.iteritems():
-                    rec = "{}.{}".format(instance_type, instance)
-                    for key, req_value in host_props.iteritems():
-                        if req_value <= attributes[key]:
-                            add_val = attributes[key] - req_value
-                            add_val = add_val / 1024.0 if key == 'mem_size' else add_val
-                            sat_set[rec] = (sat_set[rec] + add_val) if rec in sat_set else 0
-                        else:
-                            if rec in sat_set:
-                                del(sat_set[rec])
-                            break
-
-            # finding best fit
-            print sat_set
-            del (ctx.node.properties['parameters']['host'])
-            parameters['instance_type'] = min(sat_set, key=sat_set.get)
-            ctx.logger.info("{} elected as instance type".format(parameters['instance_type']))
-
-    ##############################################################
+        parameters['instance_type'] = _find_instance_type(parameters)
 
     if 'os' in ctx.node.properties['parameters']:
-        os_props = ctx.node.properties['parameters']['os']
-        with open(path.join(path.dirname(__file__), 'resources/image_translation'), 'r') as f:
-            yaml_file = yaml.load(f)
-            up = [os_props[k] for k in ['type', 'version', 'architecture', 'ec2_region_name']]
-            up.insert(3, 'ebs')
-            parameters['image_id'] = _lookup(yaml_file, 'builtin_images', *up)
-            del (ctx.node.properties['parameters']['os'])
-        ctx.logger.info("{} elected as image".format(parameters['image_id']))
+        parameters['image_id'] = _find_ami()
 
     parameters.update(ctx.node.properties['parameters'])
 
     return parameters
 
-def _lookup(dic, key, *keys):
-    return _lookup(dic.get(key, {}), *keys) if keys else dic.get(key)
+
+def _find_instance_type(parameters):
+    host_props = ctx.node.properties['parameters']['host']
+    disk_size = host_props['disk_size'] if 'disk_size' in host_props else None
+    if disk_size:
+        # Setting disk_size
+        dev_sda1 = BlockDeviceType()
+        dev_sda1.size = disk_size
+        bdm = BlockDeviceMapping()
+        bdm['/dev/sda1'] = dev_sda1
+
+        parameters['block_device_map'] = bdm
+
+        del (host_props['disk_size'])
+    with open(path.join(path.dirname(__file__),
+                        'resources/instance_translation'), 'r') as f:
+        yaml_file = yaml.load(f)
+
+        # initiating sat set to contain only possible instance types and finding best fit # NOQA
+        sat_set = {}
+        for instance_type, subtype_instance in yaml_file.iteritems():
+            for instance, attributes in subtype_instance.iteritems():
+                ami_id = "{}.{}".format(instance_type, instance)
+                sat_set[ami_id] = 0
+                for key, req_value in host_props.iteritems():
+                    if req_value <= attributes[key]:
+                        add_val = attributes[key] - req_value
+                        add_val = add_val / 1024.0 \
+                            if key == 'mem_size' else add_val
+                        sat_set[ami_id] += add_val
+                    else:
+                        if ami_id in sat_set:
+                            del (sat_set[ami_id])
+                        break
+        ret_value = min(sat_set, key=sat_set.get)
+    disk_size_msg = "custom disk size of {}GiB" \
+        if disk_size else "default disk size"
+    ctx.logger.info("{} elected as instance type with {}"
+                    .format(ret_value, disk_size_msg.format(disk_size)))
+    del (ctx.node.properties['parameters']['host'])
+
+    return ret_value
+
+
+def _find_ami():
+    os_props = ctx.node.properties['parameters']['os']
+    with open(path.join(path.dirname(__file__), 'resources/image_translation'),
+              'r') as f:
+        yaml_file = yaml.load(f)
+        up = [os_props[k] for k in
+              ['type', 'version', 'architecture', 'ec2_region_name']]
+        up.insert(3, 'ebs')
+        ret_value = _dictionary_lookup(yaml_file, 'custom_images', up)
+        if ret_value is None:
+            ret_value = _dictionary_lookup(yaml_file, 'builtin_images', *up)
+
+    ctx.logger.info("{} elected as image".format(ret_value))
+    del (ctx.node.properties['parameters']['os'])
+    return ret_value
+
+
+def _dictionary_lookup(dic, key, *keys):
+    if dic is None:
+        return None
+    return _dictionary_lookup(dic.get(key, {}), *keys) if keys else dic.get(
+        key)
+
 
 def _get_instance_keypair(provider_variables):
     """Gets the instance key pair. If more or less than one is provided,
@@ -514,6 +540,6 @@ def _get_instance_keypair(provider_variables):
         list_of_keypairs.append(provider_variables['agents_keypair'])
     elif len(list_of_keypairs) > 1:
         raise NonRecoverableError(
-            'Only one keypair may be attached to an instance.')
+            'Only one keypair may be attached to an insance.')
 
     return list_of_keypairs[0] if list_of_keypairs else None
