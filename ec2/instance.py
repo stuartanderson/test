@@ -16,7 +16,7 @@ from os import path
 
 # Third-party Imports
 import boto.exception
-from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
+import boto.ec2
 
 # Cloudify imports
 import yaml
@@ -465,9 +465,9 @@ def _find_instance_type(parameters):
     disk_size = host_props['disk_size'] if 'disk_size' in host_props else None
     if disk_size:
         # Setting disk_size
-        dev_sda1 = BlockDeviceType()
+        dev_sda1 = boto.ec2.blockdevicemapping.BlockDeviceType()
         dev_sda1.size = disk_size
-        bdm = BlockDeviceMapping()
+        bdm = boto.ec2.blockdevicemapping.BlockDeviceMapping()
         bdm['/dev/sda1'] = dev_sda1
 
         parameters['block_device_map'] = bdm
@@ -502,22 +502,41 @@ def _find_instance_type(parameters):
 
     return ret_value
 
-
 def _find_ami():
-    os_props = ctx.node.properties['parameters']['os']
-    with open(path.join(path.dirname(__file__), 'resources/image_translation'),
-              'r') as f:
-        yaml_file = yaml.load(f)
-        up = [os_props[k] for k in
-              ['type', 'version', 'architecture', 'ec2_region_name']]
-        up.insert(3, 'ebs')
-        ret_value = _dictionary_lookup(yaml_file, 'custom_images', up)
-        if ret_value is None:
-            ret_value = _dictionary_lookup(yaml_file, 'builtin_images', *up)
 
-    ctx.logger.info("{} elected as image".format(ret_value))
+    arch_dict = {
+        64: 'x86_64',
+        32: 'i386'
+    }
+
+    os_props = ctx.node.properties['parameters']['os']
+    filters = {
+        'architecture': arch_dict[os_props['architecture']],
+        'name': "*{}*{}*".format(os_props['type'], os_props['version'])
+    }
+    ami = connection.EC2ConnectionClient().client().get_all_images(
+        filters=filters)[0]
+    ctx.logger.info("{} elected as image".format(ami.id))
     del (ctx.node.properties['parameters']['os'])
-    return ret_value
+    return ami.id
+    # return None
+
+
+# def _find_ami():
+#     os_props = ctx.node.properties['parameters']['os']
+#     with open(path.join(path.dirname(__file__), 'resources/image_translation'),
+#               'r') as f:
+#         yaml_file = yaml.load(f)
+#         up = [os_props[k] for k in
+#               ['type', 'version', 'architecture', 'ec2_region_name']]
+#         up.insert(3, 'ebs')
+#         ret_value = _dictionary_lookup(yaml_file, 'custom_images', up)
+#         if ret_value is None:
+#             ret_value = _dictionary_lookup(yaml_file, 'builtin_images', *up)
+#
+#     ctx.logger.info("{} elected as image".format(ret_value))
+#     del (ctx.node.properties['parameters']['os'])
+#     return ret_value
 
 
 def _dictionary_lookup(dic, key, *keys):
