@@ -175,10 +175,12 @@ def get_provider_variables():
 
     agents_keypair = provider_config.get('agents_keypair', {})
     agents_security_group = provider_config.get('agents_security_group', {})
+    agents_subnet = provider_config.get('agents_subnet', {})
 
     provider_context = {
         "agents_keypair": agents_keypair.get('id'),
-        "agents_security_group": agents_security_group.get('id')
+        "agents_security_group": agents_security_group.get('id'),
+        "agents_subnet": agents_subnet.get('id')
     }
 
     return provider_context

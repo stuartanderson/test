@@ -116,6 +116,16 @@ def _get_connected_vpc():
             constants.SECURITY_GROUP_VPC_RELATIONSHIP, ctx.instance
         )
 
+    if not list_of_vpcs:
+        provider_variables = utils.get_provider_variables()
+        if provider_variables.get('agents_subnet'):
+            agents_group_id = provider_variables.get(
+                'agents_security_group')
+            agents_group = _get_security_group_from_id(
+                agents_group_id)
+            if agents_group.vpc_id:
+                list_of_vpcs = [agents_group.vpc_id]
+
     if len(list_of_vpcs) > 1:
         raise NonRecoverableError(
             'security group may only be attached to one vpc')
