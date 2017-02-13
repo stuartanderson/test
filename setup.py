@@ -14,6 +14,7 @@
 #    * limitations under the License.
 
 
+# import time
 from setuptools import setup
 
 # Replace the place holders with values for your project
@@ -25,7 +26,8 @@ setup(
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
 
-    version='1.4.3',
+    # version='1.4.%d' % int(time.time()),
+    version='1.4.4',
     description='Cloudify plugin for AWS infrastructure.',
 
     # This must correspond to the actual packages in the plugin.

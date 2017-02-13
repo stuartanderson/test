@@ -17,6 +17,7 @@ import os
 
 # Third-party Imports
 from boto import exception
+import boto.ec2.blockdevicemapping
 
 # Cloudify imports
 from cloudify import ctx
@@ -401,6 +402,18 @@ class Instance(AwsBaseNode):
         attribute = getattr(instance_object, attribute)
         return attribute
 
+    def _handle_block_device_map(self, parameters):
+        if 'block_device_map' in parameters:
+            bdm = boto.ec2.blockdevicemapping.BlockDeviceMapping()
+            for desc in parameters['block_device_map']:
+                device = boto.ec2.blockdevicemapping.EBSBlockDeviceType()
+                for k, v in desc['value'].items():
+                    setattr(device, k, v)
+                bdm[desc['key']] = device
+            parameters['block_device_map'] = bdm
+
+        return parameters
+
     def _handle_userdata(self, parameters):
 
         existing_userdata = parameters.get('user_data')
@@ -449,6 +462,7 @@ class Instance(AwsBaseNode):
         })
 
         parameters.update(ctx.node.properties['parameters'])
+        parameters = self._handle_block_device_map(parameters)
         parameters = self._handle_userdata(parameters)
 
         return parameters
